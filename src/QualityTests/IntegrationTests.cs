@@ -33,7 +33,7 @@ namespace IntegrationTests
             // Arrange
             host.StartWatcher();
             // Act
-            await Task.Delay(10 * 1000); // 10 secs
+            await Task.Delay(60 * 1000); // 10 secs
             var logs =  host.GetLogs();
 
             var occurance = logs.Count(s => s.Contains("Executing 'TimerFunction'"));
