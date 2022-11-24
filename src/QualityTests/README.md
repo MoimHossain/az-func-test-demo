@@ -7,7 +7,7 @@ Only works on PS7
 
 Kill a process that using a port
 ```
-kill $(Get-NetTCPConnection -LocalPort 8761 -ErrorAction Ignore).OwningProcess
+kill $(Get-NetTCPConnection -LocalPort 34698 -ErrorAction Ignore).OwningProcess
 ```
 
 # For other PS versions
