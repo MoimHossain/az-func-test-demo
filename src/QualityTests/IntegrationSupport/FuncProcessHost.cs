@@ -1,12 +1,6 @@
-﻿
-
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Management.Automation;
 
 namespace QualityTests.IntegrationSupport
 {
@@ -19,10 +13,19 @@ namespace QualityTests.IntegrationSupport
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private bool _watching;
 
-        public void Start(int port, string workDirectory)
+        public void Start(uint port, string workDirectory)
         {
             logQueue = new ConcurrentQueue<string>();
             errorQueue = new ConcurrentQueue<string>();
+
+            var pids = GetProcessesUsingPorts(port);
+            if(pids != null)
+            {
+                foreach(var pid in pids.Select(p=> Convert.ToInt32(p)))
+                {
+                    Process.GetProcessById(pid).Kill();
+                }
+            }
 
             this.hostReference = Process.Start(new ProcessStartInfo
             {
@@ -44,6 +47,7 @@ namespace QualityTests.IntegrationSupport
                         {
                             logQueue.Enqueue(args.Data);
                         }
+                        Trace.WriteLine(args.Data);
                         Console.WriteLine(args.Data);
                     }
                 };
@@ -55,6 +59,7 @@ namespace QualityTests.IntegrationSupport
                         {
                             errorQueue.Enqueue(args.Data);
                         }
+                        Trace.WriteLine(args.Data);
                         Console.WriteLine(args.Data);
                     }
                 };
@@ -86,6 +91,13 @@ namespace QualityTests.IntegrationSupport
         public string[] GetErrors()
         {
             return this.errorQueue.ToArray();
+        }
+
+        private static IEnumerable<uint> GetProcessesUsingPorts(uint id)
+        {
+            PowerShell ps = PowerShell.Create();
+            ps.AddCommand("Get-NetTCPConnection").AddParameter("LocalPort", id);
+            return ps.Invoke().Select(p => (uint)p.Properties["OwningProcess"].Value);
         }
     }
 }
